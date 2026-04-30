@@ -153,5 +153,3 @@ Thumbs.db
 /scripts/
 .editorconfig
 !/inst/java/jvecfor*.jar
-GNUmakefile
-.mvn/

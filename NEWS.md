@@ -1,3 +1,7 @@
+# Changes in jvecfor 1.0.0 with java backend 4.0.0-rc.8 (2026-04-30)
+
+* Release of Bioconductor Version 3.23
+
 # Changes in jvecfor 0.99.5 (2026-03-31)
 
 * Fix NOTES
