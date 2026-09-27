@@ -95,21 +95,84 @@ test_that(".check_java returns java path invisibly on success", {
     expect_true(nzchar(result))
 })
 
-test_that(".check_java stops when Java is not on PATH", {
-    old_path <- Sys.getenv("PATH")
-    Sys.setenv(PATH = "")
-    on.exit(Sys.setenv(PATH = old_path), add = TRUE)
-    expect_error(
+# Evaluate `code` with JAVA_HOME and PATH set, restoring both afterwards.
+with_java_env <- function(java_home, path, code) {
+    old <- Sys.getenv(c("JAVA_HOME", "PATH"), unset = NA)
+    on.exit({
+        for (v in names(old)) {
+            if (is.na(old[[v]])) Sys.unsetenv(v)
+            else do.call(Sys.setenv, as.list(old[v]))
+        }
+    }, add = TRUE)
+    Sys.setenv(JAVA_HOME = java_home, PATH = path)
+    code
+}
+
+# Write an executable fake `java` into `dir` that reports `version`.
+fake_java <- function(dir, version) {
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    exe <- file.path(dir, "java")
+    writeLines(c(
+        "#!/bin/sh",
+        sprintf("echo 'openjdk version \"%s.0.1\" 2025-01-01' >&2", version)
+    ), exe)
+    Sys.chmod(exe, mode = "0755")
+    normalizePath(exe)
+}
+
+test_that(".check_java stops when Java is not on PATH or in JAVA_HOME", {
+    with_java_env("", "", expect_error(
         jvecfor:::.check_java(),
         regexp = "Java not found"
-    )
+    ))
 })
 
-test_that(".java_available is FALSE when Java is not on PATH", {
-    old_path <- Sys.getenv("PATH")
-    Sys.setenv(PATH = "")
-    on.exit(Sys.setenv(PATH = old_path), add = TRUE)
-    expect_false(jvecfor:::.java_available())
+test_that(".java_available is FALSE when Java is not on PATH or in JAVA_HOME", {
+    with_java_env("", "", expect_false(jvecfor:::.java_available()))
+})
+
+test_that(".check_java prefers JAVA_HOME when it has Java >= 20", {
+    skip_on_os("windows")
+    tmp  <- tempfile("jvecfor-java-")
+    home <- file.path(tmp, "jdk 21")  # space: real JDKs live in Program Files
+    java_home <- fake_java(file.path(home, "bin"), 21)
+    path_dir  <- file.path(tmp, "path")
+    fake_java(path_dir, 17)
+    with_java_env(home, path_dir,
+                  expect_equal(jvecfor:::.check_java(), java_home))
+})
+
+test_that(".check_java falls back to PATH when JAVA_HOME Java is too old", {
+    skip_on_os("windows")
+    tmp  <- tempfile("jvecfor-java-")
+    home <- file.path(tmp, "jdk17")
+    fake_java(file.path(home, "bin"), 17)
+    path_dir  <- file.path(tmp, "path")
+    java_path <- fake_java(path_dir, 21)
+    with_java_env(home, path_dir,
+                  expect_equal(jvecfor:::.check_java(), java_path))
+})
+
+test_that(".check_java ignores a JAVA_HOME without a java launcher", {
+    skip_on_os("windows")
+    tmp       <- tempfile("jvecfor-java-")
+    path_dir  <- file.path(tmp, "path")
+    java_path <- fake_java(path_dir, 21)
+    with_java_env(file.path(tmp, "no-such-jdk"), path_dir,
+                  expect_equal(jvecfor:::.check_java(), java_path))
+})
+
+test_that(".check_java reports every version found when none is >= 20", {
+    skip_on_os("windows")
+    tmp  <- tempfile("jvecfor-java-")
+    home <- file.path(tmp, "jdk17")
+    fake_java(file.path(home, "bin"), 17)
+    path_dir <- file.path(tmp, "path")
+    fake_java(path_dir, 11)
+    with_java_env(home, path_dir, expect_error(
+        jvecfor:::.check_java(),
+        regexp = "found Java 17, 11"
+    ))
 })
 
 test_that("version parser identifies Java 21 as valid", {

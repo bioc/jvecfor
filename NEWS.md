@@ -6,6 +6,8 @@
 * Update jfector backend to v4.0.1
 * Examples, vignette and tests now skip when Java < 20 is on PATH,
   instead of failing (fixes build ERROR on hosts with an older JVM)
+* Look for Java in JAVA_HOME as well as on PATH, and use whichever is
+  Java >= 20
 
 ## Changes in jvecfor 1.0.0 with java backend 4.0.0-rc.8 (2026-04-30)
 

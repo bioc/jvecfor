@@ -97,9 +97,9 @@
     args
 }
 
-.run_java <- function(java_args, verbose) {
+.run_java <- function(java, java_args, verbose) {
     result <- processx::run(
-        command          = "java",
+        command          = java,
         args             = java_args,
         stdout           = "|",
         stderr           = if (isTRUE(verbose)) "|" else NULL,
@@ -243,8 +243,8 @@ fastFindKNN <- function(
 
     num_threads <- .resolve_threads(num.threads, BPPARAM)
 
-    .check_java()
-    jar <- .jvecfor_jar()
+    java <- .check_java()
+    jar  <- .jvecfor_jar()
 
     format     <- if (is_sparse) "mtx" else "bin"
     input_file <- .write_input(X, format)
@@ -256,6 +256,6 @@ fastFindKNN <- function(
         pq.subspaces, get.distance, verbose,
         format, input_file
     )
-    out <- .run_java(java_args, verbose)
+    out <- .run_java(java, java_args, verbose)
     .parse_knn_output(out, k, get.distance)
 }

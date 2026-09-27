@@ -46,45 +46,78 @@
     )
 }
 
+# Java launchers to try, in order: $JAVA_HOME/bin/java, then `java` on PATH.
+.java_candidates <- function() {
+    exe  <- if (.Platform$OS.type == "windows") "java.exe" else "java"
+    home <- Sys.getenv("JAVA_HOME")
+    cands <- c(
+        if (nzchar(home)) file.path(home, "bin", exe),
+        unname(Sys.which("java"))
+    )
+    cands <- cands[nzchar(cands) & file.exists(cands)]
+    unique(normalizePath(cands, mustWork = FALSE))
+}
+
+# Feature version of a Java launcher (e.g. 21), or NA if it cannot be read.
+.java_major <- function(java) {
+    # `java -version` writes to stderr across all JVMs.
+    res <- tryCatch(
+        processx::run(java, "-version", error_on_status = FALSE),
+        error = function(e) NULL
+    )
+    if (is.null(res)) return(NA_integer_)
+    ver_raw  <- strsplit(paste(res$stdout, res$stderr, sep = "\n"),
+                         "\r?\n")[[1L]]
+    ver_line <- ver_raw[grepl("version", ver_raw, ignore.case = TRUE)][1L]
+    if (is.na(ver_line)) return(NA_integer_)
+    m <- regmatches(ver_line, regexpr('"[0-9]+', ver_line))
+    if (length(m) != 1L) return(NA_integer_)
+    major <- as.integer(sub('"', "", m, fixed = TRUE))
+    # Java 8 reports "1.8.0_xxx" -- extract feature version after "1."
+    if (!is.na(major) && major == 1L) {
+        m2 <- regmatches(ver_line, regexpr('"1\\.[0-9]+', ver_line))
+        if (length(m2) == 1L)
+            major <- as.integer(sub('"1.', "", m2, fixed = TRUE))
+    }
+    major
+}
+
+# Return the first Java >= 20 launcher among .java_candidates(), so a stale
+# JAVA_HOME never hides a working `java` on PATH (and vice versa).
 .check_java <- function() {
-    java <- Sys.which("java")
-    if (!nzchar(java)) {
+    cands <- .java_candidates()
+    if (length(cands) == 0L) {
         stop(
-            "Java not found on PATH. Install Java >= 20 and ensure 'java' ",
-            "is on PATH. See https://adoptium.net for distributions."
+            "Java not found on PATH or in JAVA_HOME. Install Java >= 20 and ",
+            "ensure 'java' is on PATH or JAVA_HOME points to it. ",
+            "See https://adoptium.net for distributions."
         )
     }
 
-    # Verify Java >= 20. `java -version` writes to stderr across all JVMs.
-    ver_raw <- tryCatch(
-        system2(java, args = "-version", stdout = TRUE, stderr = TRUE),
-        error = function(e) character(0)
-    )
-    ver_line <- ver_raw[grepl("version", ver_raw, ignore.case = TRUE)][1L]
-    if (!is.na(ver_line)) {
-        m <- regmatches(ver_line, regexpr('"[0-9]+', ver_line))
-        if (length(m) == 1L) {
-            major <- as.integer(sub('"', "", m, fixed = TRUE))
-            # Java 8 reports "1.8.0_xxx" -- extract feature version after "1."
-            if (!is.na(major) && major == 1L) {
-                m2 <- regmatches(ver_line, regexpr('"1\\.[0-9]+', ver_line))
-                if (length(m2) == 1L)
-                    major <- as.integer(sub('"1.', "", m2, fixed = TRUE))
-            }
-            if (!is.na(major) && major < 20L) {
-                stop(
-                    "Java >= 20 is required (found Java ", major, "). ",
-                    "Install from https://adoptium.net"
-                )
-            }
+    found   <- integer(0)
+    unknown <- character(0)
+    for (java in cands) {
+        major <- .java_major(java)
+        if (is.na(major)) {
+            unknown <- c(unknown, java)
+        } else if (major >= 20L) {
+            return(invisible(java))
+        } else {
+            found <- c(found, major)
         }
     }
     # If version parsing fails entirely, proceed -- Java itself will error.
-    invisible(java)
+    if (length(unknown) > 0L) return(invisible(unknown[[1L]]))
+    stop(
+        "Java >= 20 is required (found Java ", paste(found, collapse = ", "),
+        "). Install from https://adoptium.net and put it on PATH or point ",
+        "JAVA_HOME to it."
+    )
 }
 
-# TRUE if a Java >= 20 runtime is on PATH. Guards examples, the vignette and
-# tests so they skip cleanly on hosts with an older JVM.
+# TRUE if a Java >= 20 runtime is found via JAVA_HOME or PATH. Guards
+# examples, the vignette and tests so they skip cleanly on hosts with an
+# older JVM.
 .java_available <- function() {
     tryCatch({ .check_java(); TRUE }, error = function(e) FALSE)
 }
@@ -253,10 +286,9 @@ jvecfor_setup <- function(jar_path = NULL) {
 
 .onAttach <- function(libname, pkgname) {
     # Soft-warn on attach if Java is unavailable rather than failing silently
-    java <- Sys.which("java")
-    if (!nzchar(java)) {
+    if (length(.java_candidates()) == 0L) {
         packageStartupMessage(
-            "jvecfor: Java not found on PATH. ",
+            "jvecfor: Java not found on PATH or in JAVA_HOME. ",
             "Install Java >= 20 from https://adoptium.net ",
             "before calling fastFindKNN() or related functions."
         )

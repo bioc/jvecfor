@@ -78,6 +78,9 @@ system2("java", "--version")  # should print openjdk 20 or higher
 
 If `java` is not found, install [Eclipse Temurin](https://adoptium.net) or
 any OpenJDK 20+ distribution and ensure the `java` binary is on your `PATH`.
+If `JAVA_HOME` is set, jvecfor tries `$JAVA_HOME/bin/java` first and uses
+whichever of it and the `java` on `PATH` is Java 20 or newer.
+
 ## Package options
 
 Two global options control runtime behaviour:
