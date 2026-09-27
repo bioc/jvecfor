@@ -194,6 +194,9 @@
 }
 
 .read_matrix_from_text <- function(lines) {
+    # Java's println writes "\r\n" on Windows; a stray "\r" on the last field
+    # would make fread read that column (and so the whole matrix) as character.
+    lines <- sub("\r$", "", lines)
     as.matrix(fread(
         input  = paste(lines, collapse = "\n"),
         header = FALSE,
