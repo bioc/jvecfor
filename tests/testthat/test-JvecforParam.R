@@ -112,7 +112,7 @@ test_that("buildIndex coerces integer to double", {
 
 # -- findKNN via BNPARAM (requires Java) ---------------------------------------
 
-has_java <- nzchar(Sys.which("java"))
+has_java <- jvecfor:::.java_available()
 has_jar  <- tryCatch(
     {jvecfor:::.jvecfor_jar(); TRUE},
     error = function(e) FALSE

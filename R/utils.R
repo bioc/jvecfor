@@ -83,6 +83,12 @@
     invisible(java)
 }
 
+# TRUE if a Java >= 20 runtime is on PATH. Guards examples, the vignette and
+# tests so they skip cleanly on hosts with an older JVM.
+.java_available <- function() {
+    tryCatch({ .check_java(); TRUE }, error = function(e) FALSE)
+}
+
 .write_tsv <- function(mat, file) {
     fwrite(
         as.data.frame(mat),

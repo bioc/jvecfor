@@ -89,8 +89,7 @@ test_that(".jvecfor_version errors when no JAR is found", {
 # .check_java() ----------------------------------------------------------------
 
 test_that(".check_java returns java path invisibly on success", {
-    java <- Sys.which("java")
-    if (!nzchar(java)) skip("Java not on PATH")
+    skip_if_not(jvecfor:::.java_available(), "Java >= 20 not found on PATH")
     result <- jvecfor:::.check_java()
     expect_true(nzchar(result))
 })
@@ -103,6 +102,13 @@ test_that(".check_java stops when Java is not on PATH", {
         jvecfor:::.check_java(),
         regexp = "Java not found"
     )
+})
+
+test_that(".java_available is FALSE when Java is not on PATH", {
+    old_path <- Sys.getenv("PATH")
+    Sys.setenv(PATH = "")
+    on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+    expect_false(jvecfor:::.java_available())
 })
 
 test_that("version parser identifies Java 21 as valid", {

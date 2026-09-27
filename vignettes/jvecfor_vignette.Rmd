@@ -28,8 +28,8 @@ knitr::opts_chunk$set(
     collapse  = TRUE,
     comment   = "#>"
 )
-# Guard all jvecfor calls: skip if Java or JAR is unavailable
-has_java <- nzchar(Sys.which("java"))
+# Guard all jvecfor calls: skip if Java >= 20 or the JAR is unavailable
+has_java <- jvecfor:::.java_available()
 has_jar  <- length(dir(system.file("java", package = "jvecfor"),
                         pattern = "^jvecfor-.*\\.jar$")) > 0L
 run_eg   <- has_java && has_jar

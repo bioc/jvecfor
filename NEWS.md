@@ -1,3 +1,8 @@
+# Changes in jvecfor 1.0.1 (2026-09-27)
+
+* Examples, vignette and tests now skip when Java < 20 is on PATH,
+  instead of failing (fixes build ERROR on kunpeng2)
+
 # Changes in jvecfor 1.0.0 with java backend 4.0.0-rc.8 (2026-04-30)
 
 * Release of Bioconductor Version 3.23
