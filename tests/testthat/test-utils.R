@@ -344,6 +344,14 @@ test_that(".read_matrix_from_text handles decimal values", {
     expect_equal(unname(result[2, 2]), 0.001)
 })
 
+test_that(".read_matrix_from_text handles Windows CRLF line endings", {
+    # .run_java() splits stdout on "\n", so on Windows each line keeps a "\r"
+    lines <- c("9\t20\t0.139616\r", "16\t8\t0.098078\r")
+    result <- jvecfor:::.read_matrix_from_text(lines)
+    expect_type(result, "double")
+    expect_equal(unname(result[2, 3]), 0.098078)
+})
+
 # .coerce_X() ------------------------------------------------------------------
 
 test_that(".coerce_X accepts dense numeric matrix", {

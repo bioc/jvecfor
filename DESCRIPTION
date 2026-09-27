@@ -1,7 +1,7 @@
 Package: jvecfor
 Type: Package
 Title: Fast K-Nearest Neighbor Search for Single-Cell Analysis
-Version: 1.0.2
+Version: 1.0.3
 Backend: 4.0.0-rc.8
 biocViews: SingleCell, GraphAndNetwork, Clustering, Classification
 Authors@R:

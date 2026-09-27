@@ -1,3 +1,8 @@
+# Changes in jvecfor 1.0.3 (2026-09-28)
+
+* Fix fastFindKNN() returning distances as character on Windows, where
+  Java writes CRLF line endings
+
 # Changes in jvecfor 1.0.2 (2026-09-28)
 
 * Remaining Java integration tests in test-utils.R now also skip when
