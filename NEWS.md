@@ -1,3 +1,8 @@
+# Changes in jvecfor 1.0.2 (2026-09-28)
+
+* Remaining Java integration tests in test-utils.R now also skip when
+  Java < 20 is on PATH
+
 # Changes in jvecfor 1.0.1 (2026-09-27)
 
 * Examples, vignette and tests now skip when Java < 20 is on PATH,

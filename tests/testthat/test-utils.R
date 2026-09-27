@@ -1,8 +1,9 @@
 library(testthat)
 library(jvecfor)
 
-# Helper: check if JAR is available for integration tests
+# Helper: check if Java >= 20 and the JAR are available for integration tests
 skip_if_no_jar <- function() {
+    skip_if_not(jvecfor:::.java_available(), "Java >= 20 not found on PATH")
     tryCatch(
         jvecfor:::.jvecfor_jar(),
         error = function(e) skip("jvecfor JAR not found")
