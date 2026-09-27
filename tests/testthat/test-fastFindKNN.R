@@ -4,7 +4,7 @@ library(jvecfor)
 # Skip helpers -----------------------------------------------------------------
 
 skip_if_no_java <- function() {
-    skip_if_not(nzchar(Sys.which("java")), "Java not found on PATH")
+    skip_if_not(jvecfor:::.java_available(), "Java >= 20 not found on PATH")
 }
 
 skip_if_no_jar <- function() {

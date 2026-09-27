@@ -1,0 +1,158 @@
+name: jvecfor manual release
+
+on:
+  workflow_dispatch:
+    inputs:
+      jvecfor_version:
+        description: "jvecfor version to release (x.y.z). Optional. If not provided, DESCRIPTION Version is used."
+        required: false
+        type: string
+      notes:
+        description: "Release notes body. Optional. If empty, last commit message is used."
+        required: false
+        type: string
+      dry_run:
+        description: "Dry run (yes/no). If 'yes', do NOT push commits or create a GitHub Release."
+        required: false
+        type: choice
+        options:
+          - "no"
+          - "yes"
+        default: "yes"
+
+jobs:
+  release-and-update-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout jvecfor repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need tags and commit metadata
+
+      - name: Ensure tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "20"
+          distribution: "temurin"
+
+      ####################################################################
+      # 1. Read current metadata from DESCRIPTION
+      ####################################################################
+      - name: Parse DESCRIPTION
+        id: desc
+        run: |
+          set -euo pipefail
+
+          # version from DESCRIPTION
+          CUR_VER=$(grep -E '^Version:' DESCRIPTION | head -n1 | sed 's/Version:[[:space:]]*//')
+          # backend version from DESCRIPTION (custom field "Backend:")
+          CUR_BACKEND_VER=$(grep -E '^Backend:' DESCRIPTION | head -n1 | sed 's/Backend:[[:space:]]*//')
+
+          if [ -z "$CUR_VER" ]; then
+            echo "ERROR: Could not read Version from DESCRIPTION"
+            exit 1
+          fi
+          if [ -z "$CUR_BACKEND_VER" ]; then
+            echo "WARNING: Could not read Backend from DESCRIPTION"
+          fi
+
+          echo "jvecfor in DESCRIPTION: $CUR_VER"
+          echo "Backend in DESCRIPTION:  $CUR_BACKEND_VER"
+
+          # split current DESCRIPTION jvecfor version
+          IFS='.' read -r DF_MAJ DF_MIN DF_PATCH <<< "$CUR_VER"
+
+          {
+            echo "desc_jvecfor_version=$CUR_VER"
+            echo "desc_major=$DF_MAJ"
+            echo "desc_minor=$DF_MIN"
+            echo "desc_patch=$DF_PATCH"
+            echo "desc_backend_version=$CUR_BACKEND_VER"
+          } >> "$GITHUB_OUTPUT"
+
+      ####################################################################
+      # 2. Resolve requested versions from inputs vs DESCRIPTION defaults
+      ####################################################################
+      - name: Resolve requested versions and notes
+        id: meta
+        run: |
+          set -euo pipefail
+
+          INPUT_VER="${{ github.event.inputs.jvecfor_version }}"
+          INPUT_BACK_VER="${{ github.event.inputs.backend_version }}"
+          INPUT_NOTES="${{ github.event.inputs.notes }}"
+          INPUT_DRY="${{ github.event.inputs.dry_run }}"
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
+
+          # Decide which jvecfor version to propose for release:
+          # Rule:
+          #   - If provided by user AND major/minor differ from DESCRIPTION -> use user version
+          #   - Else fall back to DESCRIPTION version
+          #
+          # Step 1: parse DESCRIPTION version
+          DESC_VER="${{ steps.desc.outputs.desc_jvecfor_version }}"
+          IFS='.' read -r DESC_MAJ DESC_MIN DESC_PATCH <<< "$DESC_VER"
+
+          if [ -n "$INPUT_VER" ]; then
+            IFS='.' read -r IN_MAJ IN_MIN IN_PATCH <<< "$INPUT_VER"
+
+            if [ "$IN_MAJ" != "$DESC_MAJ" ] || [ "$IN_MIN" != "$DESC_MIN" ]; then
+              FINAL_VER="$INPUT_VER"
+              echo "Using user-specified jvecfor version $INPUT_VER (major/minor changed)."
+            else
+              FINAL_VER="$DESC_VER"
+              echo "User jvecfor version only changed patch or same. Using DESCRIPTION version $DESC_VER."
+            fi
+          else
+            FINAL_VER="$DESC_VER"
+            echo "No user jvecfor version provided. Using DESCRIPTION version $DESC_VER."
+          fi
+
+          # Release notes priority:
+          #   - manual input notes if provided
+          #   - else last commit message
+          if [ -n "$INPUT_NOTES" ]; then
+            FINAL_NOTES="$INPUT_NOTES"
+            echo "Using manual notes."
+          else
+            FINAL_NOTES="$LAST_COMMIT_MSG"
+            echo "Using last commit message as notes."
+          fi
+
+          # Export split of FINAL_VER for later release eligibility check
+          IFS='.' read -r FIN_MAJ FIN_MIN FIN_PATCH <<< "$FINAL_VER"
+
+          {
+            echo "final_jvecfor_version=$FINAL_VER"
+            echo "final_jvecfor_major=$FIN_MAJ"
+            echo "final_jvecfor_minor=$FIN_MIN"
+            echo "final_jvecfor_patch=$FIN_PATCH"
+            echo "dry_run=$INPUT_DRY"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "release_notes<<EOF"
+            echo "$FINAL_NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Show run mode summary
+        run: |
+          set -euo pipefail
+
+          echo "jvecfor final version:   ${{ steps.meta.outputs.final_jvecfor_version }}"
+          echo "Release notes source:"
+          echo "${{ steps.meta.outputs.release_notes }}"
+          if [ "${{ steps.meta.outputs.dry_run }}" = "yes" ]; then
+            echo "MODE: DRY RUN (no push, no GitHub Release)"
+          else
+            echo "MODE: LIVE RUN"
+          fi

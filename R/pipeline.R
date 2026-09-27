@@ -31,7 +31,7 @@
 #'
 #' @return An \code{igraph} object (weighted, undirected SNN graph).
 #'
-#' @examples
+#' @examplesIf jvecfor:::.java_available()
 #' set.seed(42)
 #' X <- matrix(rnorm(5000), nrow = 100, ncol = 50)
 #'
@@ -109,7 +109,7 @@ fastMakeSNNGraph <- function(
 #'
 #' @return An \code{igraph} object (KNN graph).
 #'
-#' @examples
+#' @examplesIf jvecfor:::.java_available()
 #' set.seed(42)
 #' X <- matrix(rnorm(5000), nrow = 100, ncol = 50)
 #'

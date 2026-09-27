@@ -67,6 +67,7 @@ Convenience wrapper that calls \code{fastFindKNN} then delegates graph
 construction to \code{bluster::neighborsToSNNGraph}.
 }
 \examples{
+\dontshow{if (jvecfor:::.java_available()) withAutoprint(\{ # examplesIf}
 set.seed(42)
 X <- matrix(rnorm(5000), nrow = 100, ncol = 50)
 
@@ -76,5 +77,5 @@ igraph::vcount(g)  # 100
 
 # Higher recall with larger beam and more connections
 g2 <- fastMakeSNNGraph(X, k = 10, M = 32, oversample.factor = 2.0)
-
+\dontshow{\}) # examplesIf}
 }

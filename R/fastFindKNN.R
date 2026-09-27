@@ -193,7 +193,7 @@
 #'       NULL if \code{get.distance=FALSE}.}
 #'   }
 #'
-#' @examples
+#' @examplesIf jvecfor:::.java_available()
 #' set.seed(42)
 #' X <- matrix(rnorm(200), nrow = 20, ncol = 10)
 #'

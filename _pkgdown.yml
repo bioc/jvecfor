@@ -1,0 +1,27 @@
+url: https://gkanogiannis.github.io/jvecfor
+template:
+  bootstrap: 5
+
+reference:
+- title: KNN search
+  desc: Exact and approximate k-nearest-neighbour search.
+  contents:
+  - fastFindKNN
+- title: Graph construction
+  desc: KNN and shared-nearest-neighbour graphs for clustering.
+  contents:
+  - fastMakeKNNGraph
+  - fastMakeSNNGraph
+- title: BiocNeighbors backend
+  desc: Use jvecfor through the BiocNeighbors interface.
+  contents:
+  - JvecforParam-class
+  - JvecforIndex-class
+- title: Setup and configuration
+  contents:
+  - jvecfor_setup
+  - jvecfor-package
+
+authors:
+  Anestis Gkanogiannis:
+    href: https://github.com/gkanogiannis

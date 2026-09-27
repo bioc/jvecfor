@@ -1,16 +1,29 @@
-# Changes in jvecfor 0.99.5 (2026-03-31)
+# jfecfor NEWS
+
+## Changes in jvecfor 1.2.0 with java backend 4.0.1 (2026-10)
+
+* Release of Bioconductor Version 3.24
+* Update jfector backend to v4.0.1
+* Examples, vignette and tests now skip when Java < 20 is on PATH,
+  instead of failing (fixes build ERROR on hosts with an older JVM)
+
+## Changes in jvecfor 1.0.0 with java backend 4.0.0-rc.8 (2026-04-30)
+
+* Release of Bioconductor Version 3.23
+
+## Changes in jvecfor 0.99.5 (2026-03-31)
 
 * Fix NOTES
 
-# Changes in jvecfor 0.99.4 (2026-03-31)
+## Changes in jvecfor 0.99.4 (2026-03-31)
 
 * Remove `inst/NEWS.Rd`
 
-# Changes in jvecfor 0.99.3 (2026-03-31)
+## Changes in jvecfor 0.99.3 (2026-03-31)
 
 * Adapt BiocNeighbors integration to 2.5.4 API (Bioc 3.23)
 
-# Changes in jvecfor 0.99.2 (2026-03-31)
+## Changes in jvecfor 0.99.2 (2026-03-31)
 
 * JvecforParam/JvecforIndex S4 classes for BNPARAM drop-in integration
 * Native sparse matrix support via MatrixMarket in Java backend
@@ -19,7 +32,7 @@
 * Test coverage 70.9\% -> 85.5\%
 * BiocNeighbors moved to Imports; vignette updates
 
-# Changes in jvecfor 0.99.0
+## Changes in jvecfor 0.99.0
 
 * Submitted to Bioconductor.
 * Initial implementation of `fastFindKNN()`, drop-in replacement for

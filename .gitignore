@@ -149,9 +149,9 @@ Thumbs.db
 /jvecfor.BiocCheck/
 /doc/
 /Meta/
-/.Rbuildignore
 /scripts/
 .editorconfig
 !/inst/java/jvecfor*.jar
 GNUmakefile
 .mvn/
+docs/

@@ -88,6 +88,7 @@ Java library. Supports HNSW-DiskANN approximate search
 (\code{type="ann"}) and VP-tree exact search (\code{type="knn"}).
 }
 \examples{
+\dontshow{if (jvecfor:::.java_available()) withAutoprint(\{ # examplesIf}
 set.seed(42)
 X <- matrix(rnorm(200), nrow = 20, ncol = 10)
 
@@ -102,5 +103,5 @@ nn2 <- fastFindKNN(X, k = 3, M = 32, ef.search = 100,
 
 # Dot-product similarity (ANN only)
 nn3 <- fastFindKNN(X, k = 3, metric = "dot_product")
-
+\dontshow{\}) # examplesIf}
 }
